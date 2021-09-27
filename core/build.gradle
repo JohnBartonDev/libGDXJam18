@@ -10,5 +10,6 @@ dependencies {
 	api "com.crashinvaders.vfx:gdx-vfx-core:$gdxVfxCoreVersion"
 	api "com.crashinvaders.vfx:gdx-vfx-effects:$gdxVfxEffectsVersion"
 	api "com.sudoplay.joise:joise:$joiseVersion"
-	implementation files('../libs/actionsystem-0.4.0.jar')
+	api "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+	api files('../libs/actionsystem-0.4.0.jar')
 }

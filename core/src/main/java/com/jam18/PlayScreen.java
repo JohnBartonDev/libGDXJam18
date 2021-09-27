@@ -3,13 +3,23 @@ package com.jam18;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Graphics;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import com.vabrant.actionsystem.actions.Action;
 import com.vabrant.actionsystem.actions.ActionListener;
 import space.earlygrey.shapedrawer.ShapeDrawer;
+
+import java.nio.IntBuffer;
+
+import static org.lwjgl.glfw.GLFW.*;
 
 public class PlayScreen extends Screen implements ActionListener {
 
@@ -17,8 +27,13 @@ public class PlayScreen extends Screen implements ActionListener {
     private final int playButtonSize = 50;
     private ZoneManager zoneManager;
     private GameCamera gameCamera;
-    Player player;
+    private Player player;
     private FrameBuffer mirrorBuffer;
+    private BulletManager bulletManager;
+    private StarField starField;
+    private EnemyManager enemyManager;
+
+    private Viewport screenViewport;
 
     public enum GameState {
         RUNNING,
@@ -32,10 +47,20 @@ public class PlayScreen extends Screen implements ActionListener {
     public PlayScreen(LibGDXJAM18 game){
         super(game, new GameCamera());
 
+        screenViewport = new ScreenViewport();
+
+        glfwSetInputMode(((Lwjgl3Graphics) Gdx.graphics).getWindow().getWindowHandle(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
+        starField = new StarField();
+
+        bulletManager = new BulletManager();
         mirrorBuffer = new FrameBuffer(Pixmap.Format.RGBA8888, Constants.GAME_WIDTH, Constants.GAME_HEIGHT, false);
 
         gameCamera = (GameCamera) viewport.getCamera();
         player = new Player(gameCamera);
+        player.setPlayScreen(this);
+
+        enemyManager = new EnemyManager(this);
 
         int offset = 10;
         pauseButton = new TestButton(offset, Constants.GAME_HEIGHT - playButtonSize - offset, playButtonSize, playButtonSize, Color.BLUE);
@@ -44,15 +69,24 @@ public class PlayScreen extends Screen implements ActionListener {
         inputMultiplexer.addProcessor(player);
         inputMultiplexer.addProcessor(gameCamera);
         inputMultiplexer.addProcessor(new InputAdapter(){
+
             @Override
             public boolean keyDown(int keycode) {
                 if(keycode == Input.Keys.SPACE){
-                    pause = !pause;
+//                    pause = !pause;
                     return true;
                 }
                 return false;
             }
         });
+    }
+
+    public BulletManager getBulletManager() {
+        return bulletManager;
+    }
+
+    public Player getPlayer(){
+        return player;
     }
 
     @Override
@@ -68,13 +102,23 @@ public class PlayScreen extends Screen implements ActionListener {
         player.update(delta);
         gameCamera.update(delta,this);
         zoneManager.checkForZoneMirrors(gameCamera);
+        bulletManager.update(delta);
+        starField.update(delta);
+        enemyManager.update(delta);
+
+        bulletManager.checkCollisions(player);
+        enemyManager.checkCollisions(bulletManager);
+
+        if (player.isDead()) {
+            player.revive();
+        }
     }
 
     @Override
     public void render(Batch batch, ShapeDrawer shapeDrawer) {
         super.render(batch, shapeDrawer);
 
-        zoneManager.debugZones(shapeDrawer);
+//        zoneManager.debugZones(shapeDrawer);
         drawWorld(batch, shapeDrawer);
 
         Array<Zone> zonesToMirror = zoneManager.zonesToMirror;
@@ -129,16 +173,22 @@ public class PlayScreen extends Screen implements ActionListener {
             batch.begin();
         }
 
-        gameCamera.drawDebug(shapeDrawer);
+//        gameCamera.drawDebug(shapeDrawer);
+        player.drawCrosshair(batch, shapeDrawer);
+        player.drawHealthBar(viewport, shapeDrawer);
     }
 
     private void drawWorld(Batch batch, ShapeDrawer shapeDrawer){
-        shapeDrawer.filledRectangle(0, 0, viewport.getWorldWidth(), viewport.getWorldHeight(), Color.PINK);
-        shapeDrawer.filledRectangle(Constants.GAME_WIDTH, 0, viewport.getWorldWidth(), viewport.getWorldHeight(), Color.RED);
-        shapeDrawer.filledRectangle(0, Constants.GAME_HEIGHT, viewport.getWorldWidth(), viewport.getWorldHeight(), Color.ORANGE);
-        shapeDrawer.filledRectangle(Constants.GAME_WIDTH, Constants.GAME_HEIGHT, viewport.getWorldWidth(), viewport.getWorldHeight(), Color.PURPLE);
+//        shapeDrawer.filledRectangle(0, 0, viewport.getWorldWidth(), viewport.getWorldHeight(), Color.PURPLE);
+//        shapeDrawer.filledRectangle(Constants.GAME_WIDTH, 0, viewport.getWorldWidth(), viewport.getWorldHeight(), Color.PINK);
+//        shapeDrawer.filledRectangle(0, Constants.GAME_HEIGHT, viewport.getWorldWidth(), viewport.getWorldHeight(), Color.ORANGE);
+//        shapeDrawer.filledRectangle(Constants.GAME_WIDTH, Constants.GAME_HEIGHT, viewport.getWorldWidth(), viewport.getWorldHeight(), Color.YELLOW);
 
-        player.draw(shapeDrawer);
+        starField.draw(batch, shapeDrawer);
+        bulletManager.drawDebug(shapeDrawer);
+        player.draw(batch, shapeDrawer);
+        enemyManager.draw(batch, shapeDrawer);
+
     }
 
     @Override

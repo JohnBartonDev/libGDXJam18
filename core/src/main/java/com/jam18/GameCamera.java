@@ -77,7 +77,7 @@ public class GameCamera extends OrthographicCamera implements InputProcessor {
     }
 
     public void update(float delta, PlayScreen screen) {
-        Player player = screen.player;
+        Player player = screen.getPlayer();
 
         float x = player.getX() - (Constants.GAME_WIDTH - player.getWidth()) * 0.5f;
         float y = player.getY() - (Constants.GAME_HEIGHT - player.getHeight()) * 0.5f;

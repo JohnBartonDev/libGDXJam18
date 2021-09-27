@@ -20,6 +20,7 @@ public class Lwjgl3Launcher {
 		configuration.setTitle("LibGDXJam18");
 		configuration.setWindowedMode(Constants.GAME_WIDTH, Constants.GAME_HEIGHT);
 		configuration.setWindowIcon("libgdx128.png", "libgdx64.png", "libgdx32.png", "libgdx16.png");
+
 		return configuration;
 	}
 }

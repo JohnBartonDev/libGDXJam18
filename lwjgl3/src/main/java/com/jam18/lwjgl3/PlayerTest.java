@@ -57,7 +57,7 @@ public class PlayerTest extends ApplicationAdapter {
         player.update(Gdx.graphics.getDeltaTime());
 
         batch.begin();
-        player.draw(shapeDrawer);
+        player.draw(batch, shapeDrawer);
         batch.end();
     }
 }

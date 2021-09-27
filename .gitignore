@@ -3,6 +3,8 @@
 gradle-app.setting
 build/
 
+packTextures/
+
 ## Java:
 *.class
 *.war
